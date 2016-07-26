@@ -1,3 +1,4 @@
+
 #include <pebble.h>
 #include <math.h>
 
@@ -26,12 +27,11 @@ int height;
 
 bool hasBeenLaunchedBefore;
 
-/*static void tick_handler(struct tm *tick_time, TimeUnits changed) {
 
+/*static void tick_handler(struct tm *tick_time, TimeUnits changed) {
 	static char oldDate[50];
 	strftime(oldDate, sizeof(oldDate), "%a %d %b", tick_time);
 	persist_read_string(key, oldDate, sizeof(oldDate));
-
 	static char date_buffer[50];
 	strftime(date_buffer, sizeof(date_buffer), "%a %d %b", tick_time);
 	if(oldDate != date_buffer) {
@@ -60,18 +60,15 @@ static void intro_window_load(Window *window){
 	layer_add_child(window_get_root_layer(s_intro_window), text_layer_get_layer(s_text_layer_2));
 
 	
-	
-	
-
-	
 	weight = persist_read_int(1);
 	
 	snprintf(enterWeight, sizeof(enterWeight), "%d lb", weight);
 	text_layer_set_text(s_text_layer_2, enterWeight);
 	layer_add_child(window_get_root_layer(s_intro_window), text_layer_get_layer(s_text_layer_2));
 	
+	hasBeenLaunchedBefore = false;
 	hasBeenLaunchedBefore = persist_read_bool(0);
-  
+  	//hasBeenLaunchedBefore = false;
 	//if it hasnt been launched before, we have to do a little setup
 	if (!hasBeenLaunchedBefore) {
     	//first we write create a space for our number of glasses to be stored
@@ -136,13 +133,13 @@ static void glass_window_load(Window *window){
 	//if it hasnt been launched before, we have to do a little setup
 	if (!hasBeenLaunchedBefore) {
     	//first we write create a space for our number of glasses to be stored
-    	StatusCode intStatus = persist_write_int(2, cupVolume);
+    	StatusCode intStatus = persist_write_int(3, cupVolume);
     	//then we tell the watch that we have launched for the first time
     	//next we output some info about whether or not the info was saved, this can be ignored
     	APP_LOG(APP_LOG_LEVEL_DEBUG, "Writing... int code %d" , intStatus);
 	}
 	
-	cupVolume = persist_read_int(2);
+	cupVolume = persist_read_int(3);
 	
 	snprintf(enterVolume, sizeof(enterVolume), "Set the volume of your cup: %d oz", cupVolume);
 	text_layer_set_text(s_glass_layer, enterVolume);
@@ -155,7 +152,8 @@ static void glass_window_unload(Window *window){
 
 
 static void draw_meter(Layer *layer, GContext *ctx){
-	height = round(((float)waterIntake/(float)waterNeeded)*168);
+	waterNeeded = persist_read_int(2);
+	height = round((float)waterIntake/(float)waterNeeded*168);
 	
 	if(height > 168){
 		height = 168;
@@ -172,25 +170,20 @@ static void meter_window_load(Window *window){
 	text_layer_set_font(s_meter_layer, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_JOSEFIN_18)));
 	text_layer_set_text_alignment(s_meter_layer, GTextAlignmentCenter);
 	
+	waterNeeded = persist_read_int(2);
 	percentage = ((float)waterIntake/(float)waterNeeded)*100;
 	snprintf(percent, sizeof(percent), "%d%%", percentage);
 	text_layer_set_text(s_meter_layer, percent);
 	
-	hasBeenLaunchedBefore = persist_read_bool(0);
+	//hasBeenLaunchedBefore = persist_read_bool(0);
   
-	//if it hasnt been launched before, we have to do a little setup
-	if (!hasBeenLaunchedBefore) {
-    	//first we write create a space for our number of glasses to be stored
-    	StatusCode intStatus = persist_write_int(3, percentage);
-    	//then we tell the watch that we have launched for the first time
-    	//next we output some info about whether or not the info was saved, this can be ignored
-    	APP_LOG(APP_LOG_LEVEL_DEBUG, "Writing... int code %d" , intStatus);
-	}
+    //StatusCode intStatus = persist_write_int(3, percentage);
+    	
+	//persist_write_int(3, percentage);
+	//percentage = persist_read_int(3);
 	
-	percentage = persist_read_int(3);
-	
-	snprintf(percent, sizeof(percent), "%d%%", percentage);
-	text_layer_set_text(s_meter_layer, percent);
+	//snprintf(percent, sizeof(percent), "%d%%", percentage);
+	//text_layer_set_text(s_meter_layer, percent);
 	layer_add_child(window_get_root_layer(s_meter_window), text_layer_get_layer(s_meter_layer));
 	
 	
@@ -295,15 +288,17 @@ static void select_single_click_handler3(ClickRecognizerRef recognizer, void *co
 
 static void up_single_click_handler3(ClickRecognizerRef recognizer, void *context) {
 	// A single click has just occured
+	cupVolume = persist_read_int(3);
 	cupVolume++;
 	snprintf(enterVolume, sizeof(enterVolume), "Set the volume of your cup: %d oz", cupVolume);
 	text_layer_set_text(s_glass_layer, enterVolume);
 	layer_add_child(window_get_root_layer(s_glass_window), text_layer_get_layer(s_glass_layer));
-	StatusCode intStatus = persist_write_int(2, cupVolume);
+	StatusCode intStatus = persist_write_int(3, cupVolume);
 }
 
 static void down_single_click_handler3(ClickRecognizerRef recognizer, void *context) {
 	// A single click has just occured
+	cupVolume = persist_read_int(3);
 	cupVolume--;
 	
 	if(cupVolume < 0){
@@ -313,7 +308,7 @@ static void down_single_click_handler3(ClickRecognizerRef recognizer, void *cont
 	snprintf(enterVolume, sizeof(enterVolume), "Set the volume of your cup: %d oz", cupVolume);
 	text_layer_set_text(s_glass_layer, enterVolume);
 	layer_add_child(window_get_root_layer(s_glass_window), text_layer_get_layer(s_glass_layer));
-	StatusCode intStatus = persist_write_int(2, cupVolume);
+	StatusCode intStatus = persist_write_int(3, cupVolume);
 }
 
 static void click_config_provider3(void *context){
@@ -325,7 +320,9 @@ static void click_config_provider3(void *context){
 
 
 static void select_single_click_handler4(ClickRecognizerRef recognizer, void *context) {
-	
+	cupVolume = persist_read_int(3);
+	waterNeeded = persist_read_int(2);
+	waterIntake = persist_read_int(4);
 	waterIntake += cupVolume;
 	
 	
@@ -335,7 +332,7 @@ static void select_single_click_handler4(ClickRecognizerRef recognizer, void *co
 	layer_add_child(window_get_root_layer(s_meter_window), bitmap_layer_get_layer(s_meter_bitmap_layer));
 	
 	percentage = ((float)waterIntake/(float)waterNeeded)*100;
-	StatusCode intStatus = persist_write_int(3, percentage);
+	//StatusCode intStatus = persist_write_int(3, percentage);
 	snprintf(percent, sizeof(percent), "%d%%", percentage);
 	//APP_LOG(APP_LOG_LEVEL_DEBUG_VERBOSE, percent);
 	text_layer_set_text(s_meter_layer, percent);
@@ -344,6 +341,8 @@ static void select_single_click_handler4(ClickRecognizerRef recognizer, void *co
 	snprintf(volume, sizeof(volume), "%d oz / %d oz", waterIntake, waterNeeded);
 	text_layer_set_text(s_volume_layer, volume);
 	layer_add_child(window_get_root_layer(s_meter_window), text_layer_get_layer(s_volume_layer));
+	
+	StatusCode intStatus = persist_write_int(4, waterIntake);
 }
 
 static void click_config_provider4(void *context){
