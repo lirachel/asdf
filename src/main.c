@@ -251,7 +251,7 @@ static void select_single_click_handler(ClickRecognizerRef recognizer, void *con
 
 static void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 	// A single click has just occured
-	weight++;
+	weight+=5;
 	snprintf(enterWeight, sizeof(enterWeight), "%d lb", weight);
 	text_layer_set_text(s_text_layer_2, enterWeight);
 	layer_add_child(window_get_root_layer(s_intro_window), text_layer_get_layer(s_text_layer_2));
@@ -260,7 +260,7 @@ static void up_single_click_handler(ClickRecognizerRef recognizer, void *context
 
 static void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 	// A single click has just occured
-	weight--;
+	weight-=5;
 	if(weight<0){
 		weight = 0;
 	}
