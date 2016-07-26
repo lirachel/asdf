@@ -2,7 +2,7 @@
 #include <pebble.h>
 #include <math.h>
 
-static Window *s_intro_window, *s_calculate_window, *s_glass_window, *s_meter_window;
+static Window *gluggle, *s_intro_window, *s_calculate_window, *s_glass_window, *s_meter_window;
 static TextLayer *s_text_layer, *s_text_layer_2, *s_calculate_layer, *s_glass_layer, *s_meter_layer, *s_volume_layer;
 
 static int weight;
@@ -14,8 +14,8 @@ static char waterAmount[100];
 static int cupVolume;
 static char enterVolume[100];
 
-static BitmapLayer *s_meter_bitmap_layer, *s_glass_bitmap_layer;
-static GBitmap *s_meter_bitmap, *s_glass_bitmap;
+static BitmapLayer *gluggle_layer, *s_meter_bitmap_layer, *s_glass_bitmap_layer;
+static GBitmap *gluggle_bitmap, *s_meter_bitmap, *s_glass_bitmap;
 static Layer *meter;
 
 int waterIntake;
@@ -39,6 +39,22 @@ static void tick_handler(struct tm *tick_time, TimeUnits changed) {
 		persist_write_int(4, waterIntake);
 	}
 	persist_write_string(5, date_buffer);
+}
+
+
+static void gluggle_load(Window *window){
+	gluggle_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
+	bitmap_layer_set_compositing_mode(gluggle_layer, GCompOpSet);
+	bitmap_layer_set_alignment(gluggle_layer, GAlignCenter);
+	bitmap_layer_set_background_color(gluggle_layer, GColorClear);
+	
+	gluggle_bitmap = gbitmap_create_with_resource(RESOURCE_ID_GLUGGLE);
+	bitmap_layer_set_bitmap(gluggle_layer, gluggle_bitmap);
+	layer_add_child(window_get_root_layer(gluggle), bitmap_layer_get_layer(gluggle_layer));
+}
+
+static void gluggle_unload(Window *window){
+	bitmap_layer_destroy(gluggle_layer);
 }
 
 
@@ -232,9 +248,20 @@ static void meter_window_load(Window *window){
 }
 
 static void meter_window_unload(Window *window){
-	
+	text_layer_destroy(s_meter_layer);
+	text_layer_destroy(s_volume_layer);
+	bitmap_layer_destroy(s_meter_bitmap_layer);
+	bitmap_layer_destroy(s_glass_bitmap_layer);
 }
 
+
+static void select_single_click_handler0(ClickRecognizerRef recognizer, void *context){
+	window_stack_push(s_intro_window, true);
+}
+
+static void click_config_provider0(void *context){
+	window_single_click_subscribe(BUTTON_ID_SELECT, select_single_click_handler0);
+}
 
 static void select_single_click_handler(ClickRecognizerRef recognizer, void *context) {
 	// A single click has just occured
@@ -364,10 +391,17 @@ static void init(){
 	
 	//if(weight == 0 || cupVolume == 0){
 	
+	gluggle = window_create();
 	s_intro_window = window_create();
 	s_calculate_window = window_create();
 	s_glass_window = window_create();
 	s_meter_window = window_create();
+	
+	window_set_window_handlers(gluggle, (WindowHandlers) {
+    .load = gluggle_load,
+    .unload = gluggle_unload
+ 	});
+	window_set_background_color(gluggle, GColorWhite);
 	
 	window_set_window_handlers(s_intro_window, (WindowHandlers) {
     .load = intro_window_load,
@@ -388,10 +422,11 @@ static void init(){
 	window_set_background_color(s_glass_window, GColorWhite);
 
 	
-	window_stack_push(s_intro_window, true);
+	window_stack_push(gluggle, true);
 	//}
 		
 	// Use this provider to add button click subscriptions
+	window_set_click_config_provider(gluggle, click_config_provider0);
 	window_set_click_config_provider(s_intro_window, click_config_provider);
 	window_set_click_config_provider(s_calculate_window, click_config_provider2);
 	window_set_click_config_provider(s_glass_window, click_config_provider3);
